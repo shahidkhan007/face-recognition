@@ -1,6 +1,7 @@
 # Overview
 
 This is a clinic app that provides the services for the patient required by the project.
+**Note**: The Face recognition process docs are in 'Face recognition.md'
 
 ## Fuctional requirenments:
 
