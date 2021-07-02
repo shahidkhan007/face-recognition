@@ -11,7 +11,7 @@ import numpy as np
 Base = declarative_base()
 
 
-
+# The user model, which translates to the table in the mysql database
 class User(Base):
     __tablename__ = 'users'
 
@@ -28,26 +28,30 @@ class User(Base):
         return f"<User Name={self.name} id={self.id} email={self.email} password={self.password}>"
 
 
+# Converting a face encoding to a user base64 string so that it can be stored in the databse
 def array_to_base64(face_array):
     return base64.b64encode(face_array)
 
-
+# face encoding is saved in the DB in base64 form, this converts it back to a numpy array
 def base64_to_array(b64_string, dtype=np.float32):
     b64_decoded = base64.b64decode(b64_string)
     return np.frombuffer(b64_decoded, dtype)
 
 
+# Combine multiple face encoding arrays to a single string with a delimiter
 def combine_base64(base64_strings, delimiter='@'):
     decoded = list(map(lambda x: x.decode(), base64_strings))
     return delimiter.join(decoded)
 
 
+# Splits the combined base64 string to the multiple face encoding arrays
 def split_base64(one_big_base64, delimiter='@'):
     split = one_big_base64.split(delimiter)
     encoded = list(map(lambda x: x.encode(), split))
     return encoded
 
 
+# Creates a Databse if one doesn't exist
 def create_mysql_database(engine, dbname):
     try:
         engine.execute(f"CREATE DATABASE {dbname}")
@@ -56,11 +60,13 @@ def create_mysql_database(engine, dbname):
     engine.execute(f"USE {dbname}")
 
 
+# Get all the users and there info from the database
 def get_all_users(sess):
     users = sess.query(User).all()
     return users
 
 
+# Initializes databse models and session etc
 def sql_init():
     with open('credentials.json', 'r') as f:
         credentials = load(f)
