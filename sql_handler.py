@@ -51,7 +51,7 @@ def split_base64(one_big_base64, delimiter='@'):
     return encoded
 
 
-# Creates a Databse if one doesn't exist
+# Creates a Databse if one doesn't exist, if one exists, instricts the server to use the db we use for storing users as its default one
 def create_mysql_database(engine, dbname):
     try:
         engine.execute(f"CREATE DATABASE {dbname}")
@@ -68,16 +68,25 @@ def get_all_users(sess):
 
 # Initializes databse models and session etc
 def sql_init():
+    # Load the credentials
     with open('credentials.json', 'r') as f:
         credentials = load(f)
 
+    # The URI to connect to
     uri = f"mysql://{credentials['user']}:{credentials['password']}@{credentials['host']}:{credentials['port']}"
+
     engine = sqlalchemy.create_engine(uri, echo=False)
     create_mysql_database(engine, 'users')
+
     try:
+        # Creates all the tables, based on the models provided, in this case, only that one of users
         Base.metadata.create_all(engine)
     except:
+        # this error will occur if the tables already exist, in that case, just ignore as the tables already exist
         pass
+
+    # Get a session, a connection to the database, all queries are executed through a session
+
     Session = sessionmaker(bind=engine)
     sql_session = Session()
     return sql_session

@@ -7,7 +7,10 @@ from PIL import Image
 
 EYE_SIZE = 15
 
-# Performs face recognition to see if the user is in the databse or not
+# Functionality: Performs face recognition to see if the user is in the databse or not
+# How it works?: Creates a feed and then continually grabs a frame from it until a face
+# is found, when found, it compares it to all the users's faces to see if it belongs to them,
+# if yes, it returrns that user, otherwise it returns None, saying the face matching no one in the database.
 def face_recognition(detector, f_model, all_users, draw_face_features=True, show_scan=True):
     try:
         # Get a reference to webcam #0 (the default one)
@@ -64,7 +67,10 @@ def face_recognition(detector, f_model, all_users, draw_face_features=True, show
         cv2.destroyAllWindows()
 
 
-# Detects multiple faces in a frame using the provided detector model
+# Functionality: Detects multiple faces in a frame using the provided detector model
+# How it works?: uses the pre-built MTCNN model to detect all the faces in the frame
+# provided ( pixels ). The MTCNN models returns a list of dictionaries containing the faces detected,
+# if any. the dictionary contains info like the bounding box, and face features like eyes, nose etc.
 def detect_faces(detector, pixels):
     # Converting from cv2 BGR to RGB
     pixels = cv2.cvtColor(pixels, cv2.COLOR_BGR2RGB)
@@ -88,7 +94,9 @@ def detect_single_face(detector, pixels):
 
 
 
-# Carves out the faces from the frame and the face features like the bounding box, eyes
+# Functionality: Carves out the faces from the frame and the face features like the bounding box, eyes
+# How it works?: Uses the info dictionary provided by the MTCNN model to extract the face, as it will later be needed
+# in face recognition, it needs a face, not the whole frame
 def extract_faces(frame, frame_data):
     faces = []
     boxes = []
@@ -115,7 +123,8 @@ def extract_faces(frame, frame_data):
     return faces, boxes
 
 
-# Draws the bounding box and eye features onto a frame
+# Functionality: Draws the bounding box and eye features onto a frame
+# How it works?: Uses the features disctionary provided and open-cv to draw the features on to the frame
 def draw_features(frame, features):
     face = features['face']
     eye_left = features['eye_left']
@@ -162,7 +171,12 @@ def extract_single_face(frame, frame_data):
 
 
 
-# Uses the facenet model to convert a face to its encoding
+# Functionality: Uses the facenet model to convert a face to its encoding
+# How it works?: first it converts the array to a PIL image, to resize it.
+# Then, after its resized, its converted back to numpy array to add one more dimension to it
+# as the model( Converts a carved face to a 512-dimensional vector ) expects multiple images.
+# After the model outputs the the array, its dimensionality is decreased to what we want as
+# the model outputs as to spit multiple encodings for multiple faces.
 def img_to_encoding(facenet_model, face_array):
     face_image = Image.fromarray(face_array)
     face_image = face_image.resize((160, 160))  # resizing to match the model dimensionality
@@ -175,7 +189,9 @@ def img_to_encoding(facenet_model, face_array):
     return encoding.astype(np.float32)
 
 
-# Finds and compares the distance between two faces using L2 norm
+# Functionality: Finds and compares the distance between two faces using L2 norm
+# How it works?: first we perform an element-wise subtraction and then take its L2 norm and
+# this gives the distance between the 2 encodings, telling how much it thinks the encodings are of the same person
 def compare_encodings(identity_encoding, face_encoding, threshold=3.0):
     sub = face_encoding - identity_encoding
     dist = np.linalg.norm(sub)
@@ -186,7 +202,8 @@ def compare_encodings(identity_encoding, face_encoding, threshold=3.0):
         return False, dist
 
 
-# Compares two faces and returns the average distance between them and if they are the same person based on the threshold parameter
+# Functionality: Compares two faces and returns the average distance between them and if they are the same person based on the threshold parameter
+# How it works?: Uses compare_encodings under the hood, it just does an ensemble type comparison for realiable distance.
 def face_verification(model, other_user_encodings, face_array, threshold=3.0):
     # Convert the face to its encoding
     face_encoding = img_to_encoding(model, face_array)
@@ -195,7 +212,10 @@ def face_verification(model, other_user_encodings, face_array, threshold=3.0):
     faces = split_base64(other_user_encodings)
     faces = list( map( lambda face_b64: base64_to_array(face_b64), faces ) )
 
+    # Distance of each user face to the face_array
     distances = []
+
+    # number of times the face_array's encoding is closer to identity face than the threshold
     is_id_count = 0
 
     for enc in faces:

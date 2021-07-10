@@ -125,6 +125,7 @@ def register_page(show_scan=True, draw_face_features=True):
 
         sql_session.add(user)
         sql_session.commit()
+        all_users = get_all_users(sql_session)
 
         success("USER CREATED SUCCESSFULLY")
     except sqlalchemy.exc.IntegrityError:
